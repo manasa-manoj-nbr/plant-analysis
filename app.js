@@ -18,10 +18,9 @@ app.use(express.static("public"));
 
 async function analyzeImage(imageData, mimeType) {
     try {
-        // ✅ Get the correct model
+
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
 
-        // ✅ Correct API request format
         const response = await model.generateContent({
             contents: [
                 {
@@ -34,7 +33,6 @@ async function analyzeImage(imageData, mimeType) {
             ]
         });
 
-        // ✅ Extract response safely
         const resultText = response.candidates?.[0]?.content?.parts?.[0]?.text || "No analysis available.";
         return resultText;
     } catch (error) {
@@ -61,10 +59,8 @@ app.post("/analyze", upload.single("image"), async (req, res) => {
             return res.status(400).json({ error: "Could not read image file" });
         }
 
-        // ✅ Call the analysis function
         const plantInfo = await analyzeImage(imageData, req.file.mimetype);
 
-        // ✅ Clean up the uploaded file
         await fsPromises.unlink(imagePath);
 
         res.json({
@@ -91,14 +87,13 @@ app.post("/download", express.json(), async (req, res) => {
         const doc = new PDFDocument();
         doc.pipe(writeStream);
 
-        // ✅ Add content to the PDF
+
         doc.fontSize(24).text("Plant Analysis Report", { align: "center" });
         doc.moveDown();
         doc.fontSize(14).text(`Date: ${new Date().toLocaleDateString()}`);
         doc.moveDown();
         doc.fontSize(14).text(result || "No analysis available.", { align: "left" });
 
-        // ✅ Insert Image (if available)
         if (image) {
             const base64Data = image.replace(/^data:image\/\w+;base64,/, "");
             const buffer = Buffer.from(base64Data, "base64");
@@ -108,7 +103,6 @@ app.post("/download", express.json(), async (req, res) => {
 
         doc.end();
 
-        // ✅ Wait for the PDF to be created
         await new Promise((resolve, reject) => {
             writeStream.on("finish", resolve);
             writeStream.on("error", reject);
@@ -118,7 +112,7 @@ app.post("/download", express.json(), async (req, res) => {
             if (err) {
                 res.status(500).json({ error: "Error downloading the PDF report" });
             }
-            fsPromises.unlink(filePath); // Cleanup after download
+            fsPromises.unlink(filePath);
         });
 
     } catch (error) {
@@ -127,9 +121,6 @@ app.post("/download", express.json(), async (req, res) => {
     }
 });
 
-/**
- * Start the Server
- */
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });
